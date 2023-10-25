@@ -1,0 +1,46 @@
+alias: Tag Scan
+description: Actions when a tag is scanned
+trigger:
+  - platform: event
+    event_type: tag_scanned
+condition: []
+action:
+  - choose:
+      - conditions:
+          - condition: state
+            entity_id: alarm_control_panel.hem_larm
+            state: disarmed
+          - condition: template
+            value_template: "{{ trigger.event.data.tag_id in alarm_tags }}"
+        sequence:
+          - service: alarm_control_panel.alarm_arm_away
+            data:
+              code: "1234"
+            target:
+              entity_id: alarm_control_panel.hem_larm
+      - conditions:
+          - condition: template
+            value_template: "{{ (trigger.event.data.tag_id in alarm_tags) == false}}"
+        sequence:
+          - service: notify.persistent_notification
+            data:
+              message: Illegal TAG
+              title: WARNING
+      - conditions:
+          - condition: template
+            value_template: "{{ trigger.event.data.tag_id in alarm_tags }}"
+        sequence:
+          - service: alarm_control_panel.alarm_disarm
+            data:
+              code: "1234"
+            target:
+              entity_id: alarm_control_panel.hem_larm
+    default: []
+variables:
+  alarm_tags:
+    11-22-33-44-55-66-01:
+      tag_user: Mark
+    11-22-33-44-55-66-02:
+      tag_user: Mick
+max_exceeded: silent
+mode: single
